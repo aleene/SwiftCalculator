@@ -31,6 +31,7 @@ class ViewController: UIViewController {
                 return nil
             }
         }
+        
         set {
             if newValue != nil {
                 display.text = "\(newValue!)"
@@ -67,6 +68,19 @@ class ViewController: UIViewController {
         inputLabel.text = inputLabel.text! + "-"
     }
     
+    @IBAction func clearErrorPressed() {
+        if userIsInTheMiddleOfTypingANumber {
+            // remove the last character on the display
+            display.text!.removeAtIndex(display.text!.endIndex.predecessor())
+            inputLabel.text!.removeAtIndex(inputLabel.text!.endIndex.predecessor())
+            // check if any digit is left and whether there rests something to delete
+            if display.text!.characters.count == 0 {
+                userIsInTheMiddleOfTypingANumber = false
+                displayValue = nil
+            }
+        } // else nothing happens
+    }
+    
     @IBAction func clearPressed() {
         brain.clear()
         displayValue = nil
@@ -85,7 +99,6 @@ class ViewController: UIViewController {
             if let result = brain.performOperation(operation) {
                 displayValue! = result
             } else {
-                // displayValue moet een optional worden
                 displayValue = nil
             }
         }
