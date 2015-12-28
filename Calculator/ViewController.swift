@@ -22,38 +22,54 @@ class ViewController: UIViewController {
     
     let space = " "
     
+    
+    var displayValue: Double? {
+        get {
+            if let x = NSNumberFormatter().numberFromString(display.text!) {
+                return x.doubleValue
+            } else {
+                return nil
+            }
+        }
+        set {
+            if newValue != nil {
+                display.text = "\(newValue!)"
+            } else {
+                display.text = "0"
+            }
+        }
+    }
+
     @IBAction func digitPressed(sender: UIButton) {
         let digit = sender.currentTitle!
         let dot = "."
-        let zero = "0"
         if (userIsInTheMiddleOfTypingANumber) {
-            if digit == dot {
-                if !aDotHasBeenAddedToNumber {
-                    display.text = display.text! + digit
-                    inputLabel.text = inputLabel.text! + digit
-                    aDotHasBeenAddedToNumber = true
-                } // else nothing happens
-            } else {
+            // do we have two dots?
+            if (display.text!.rangeOfString(dot) == nil) || digit != dot {
                 display.text = display.text! + digit
                 inputLabel.text = inputLabel.text! + digit
             }
         }
         else {
-            if digit == dot {
-                // add a leading 0
-                display.text = zero + dot
-                inputLabel.text = inputLabel.text! + space + zero + digit
-            } else {
-                display.text! = digit
-                inputLabel.text = inputLabel.text! + space + digit
+            display.text! = digit
+            if let lastChar = inputLabel.text {
+                if lastChar.characters.last == "=" {
+                    inputLabel.text!.removeAtIndex(inputLabel.text!.endIndex.predecessor())
+                }
             }
+            inputLabel.text = inputLabel.text! + space + digit
             userIsInTheMiddleOfTypingANumber = true
         }
     }
     
+    @IBAction func changeSign() {
+        displayValue = -1 * displayValue!
+        inputLabel.text = inputLabel.text! + "-"
+    }
+    
     @IBAction func clearPressed() {
         brain.clear()
-        display.text = "0"
+        displayValue = nil
         inputLabel.text = ""
     }
         
@@ -62,12 +78,15 @@ class ViewController: UIViewController {
             enter()
         }
         if let operation = sender.currentTitle {
-            inputLabel.text = inputLabel.text! + space + sender.currentTitle!
+            if inputLabel.text!.characters.last! == "=" {
+                _ = inputLabel.text!.characters.dropLast()
+            }
+            inputLabel.text = inputLabel.text! + space + sender.currentTitle! + "="
             if let result = brain.performOperation(operation) {
-                displayValue = result
+                displayValue! = result
             } else {
                 // displayValue moet een optional worden
-                displayValue = 0
+                displayValue = nil
             }
         }
     }
@@ -76,20 +95,10 @@ class ViewController: UIViewController {
     @IBAction func enter() {
         userIsInTheMiddleOfTypingANumber = false
         aDotHasBeenAddedToNumber = false
-        if let result = brain.pushOperand(displayValue) {
-            displayValue = result
+        if let result = brain.pushOperand(displayValue!) {
+            displayValue! = result
         } else {
-            // displayValue moet een optional worden
-            displayValue = 0
-        }
-    }
-    
-    var displayValue: Double {
-        get {
-            return NSNumberFormatter().numberFromString(display.text!)!.doubleValue
-        }
-        set {
-            display.text = "\(newValue)"
+            displayValue = nil
         }
     }
 }
