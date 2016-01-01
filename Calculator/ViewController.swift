@@ -15,32 +15,38 @@ class ViewController: UIViewController {
     @IBOutlet weak var inputLabel: UILabel!
     
     var userIsInTheMiddleOfTypingANumber = false
-    
+    var userEnteredAFormula = false
     var aDotHasBeenAddedToNumber = false
     
     var brain = CalculatorBrain()
     
     let space = " "
+    let variableName = "M"
+    let zero = "0"
+    let equal = "="
     
-    
-    var displayValue: Double? {
+    var displayValue: Double? { // Project 2.9.4 optional double
         get {
-            if let x = NSNumberFormatter().numberFromString(display.text!) {
-                return x.doubleValue
-            } else {
-                return nil
-            }
+            // Project 2.Hint.1 use optional chaining
+            // http://cs193p.m2m.at/cs193p-project-2-assignment-2-task-4-winter-2015/
+            return NSNumberFormatter().numberFromString(display.text!)?.doubleValue
         }
         
         set {
-            if newValue != nil {
-                display.text = "\(newValue!)"
-            } else {
-                display.text = "0"
-            }
+            display.text = newValue != nil ? "\(newValue!)" : (userEnteredAFormula ? space : zero) // Project 2.9.F blank
         }
     }
 
+    // Project 2.8 inputLabel based on brain.description
+    // Project.2.Hint.9 single knothole?
+    func updateInputLabel() {
+        if let description: String = brain.description {
+            inputLabel.text = description
+        } else {
+            inputLabel.text = space // Project 2.Hint.6
+        }
+    }
+    
     @IBAction func digitPressed(sender: UIButton) {
         let digit = sender.currentTitle!
         let dot = "."
@@ -48,31 +54,23 @@ class ViewController: UIViewController {
             // do we have two dots?
             if (display.text!.rangeOfString(dot) == nil) || digit != dot {
                 display.text = display.text! + digit
-                inputLabel.text = inputLabel.text! + digit
             }
         }
         else {
             display.text! = digit
-            if let lastChar = inputLabel.text {
-                if lastChar.characters.last == "=" {
-                    inputLabel.text!.removeAtIndex(inputLabel.text!.endIndex.predecessor())
-                }
-            }
-            inputLabel.text = inputLabel.text! + space + digit
             userIsInTheMiddleOfTypingANumber = true
         }
     }
     
     @IBAction func changeSign() {
         displayValue = -1 * displayValue!
-        inputLabel.text = inputLabel.text! + "-"
+        // the actual sign of a operand is only pushed to the brain upon enter
     }
     
     @IBAction func clearErrorPressed() {
         if userIsInTheMiddleOfTypingANumber {
             // remove the last character on the display
             display.text!.removeAtIndex(display.text!.endIndex.predecessor())
-            inputLabel.text!.removeAtIndex(inputLabel.text!.endIndex.predecessor())
             // check if any digit is left and whether there rests something to delete
             if display.text!.characters.count == 0 {
                 userIsInTheMiddleOfTypingANumber = false
@@ -81,10 +79,13 @@ class ViewController: UIViewController {
         } // else nothing happens
     }
     
+    // Project 2.10 updated
     @IBAction func clearPressed() {
-        brain.clear()
+        userEnteredAFormula = false
+        userIsInTheMiddleOfTypingANumber = false
+        brain.clearAll()
         displayValue = nil
-        inputLabel.text = ""
+        updateInputLabel()
     }
         
     @IBAction func operate(sender: UIButton) {
@@ -92,18 +93,18 @@ class ViewController: UIViewController {
             enter()
         }
         if let operation = sender.currentTitle {
-            if inputLabel.text!.characters.last! == "=" {
-                _ = inputLabel.text!.characters.dropLast()
-            }
-            inputLabel.text = inputLabel.text! + space + sender.currentTitle! + "="
+//            if inputLabel.text!.characters.last! == "=" {
+//                _ = inputLabel.text!.characters.dropLast()
+//            }
+//            inputLabel.text = inputLabel.text! + space + sender.currentTitle! + "="
             if let result = brain.performOperation(operation) {
                 displayValue! = result
             } else {
                 displayValue = nil
             }
         }
+        updateInputLabel()
     }
-    
     
     @IBAction func enter() {
         userIsInTheMiddleOfTypingANumber = false
@@ -113,6 +114,28 @@ class ViewController: UIViewController {
         } else {
             displayValue = nil
         }
+        updateInputLabel()
     }
+    
+    // Project 2.9, 2.9.e
+    @IBAction func setMemoryVariable() {
+        if userIsInTheMiddleOfTypingANumber {
+           enter()
+        }
+        userEnteredAFormula = true
+        // corresponds to the M button and adds a variable to the brain stack
+        brain.pushOperand(variableName) // Project 2.9.c
+        updateInputLabel()
+        displayValue = brain.evaluate() // Project 2.9.d
+    }
+    
+    // Project 2.9, 2.9.e
+    @IBAction func setMemoryValue() {
+        // corresponds to the >M button and adds the variable value to the brain stack
+        brain.variableValues[variableName] = displayValue // Project 2.9.a
+        userIsInTheMiddleOfTypingANumber = false // Project 2.9.b
+        displayValue = brain.evaluate() // Project 2.9.d
+    }
+    
 }
 
