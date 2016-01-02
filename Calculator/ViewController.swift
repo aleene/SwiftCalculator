@@ -14,9 +14,6 @@ class ViewController: UIViewController {
 
     @IBOutlet weak var inputLabel: UILabel!
     
-    // change this to use another part of the app
-    let appWithErrorReporting = true
-    
     var userIsInTheMiddleOfTypingANumber = false
     var userEnteredAFormula = false
     var aDotHasBeenAddedToNumber = false
@@ -50,15 +47,11 @@ class ViewController: UIViewController {
     }
     
     func extensiveEvaluate() {
-        if appWithErrorReporting {
-            switch brain.evaluateAndReportErrors() {
-            case .Result(let waarde):
-                displayValue = waarde
-            case .Error(let failureDescription):
-                display.text = failureDescription != nil ? failureDescription! : "No error defined"
-            }
-        } else {
-            displayValue = brain.evaluate()
+        switch brain.evaluateAndReportErrors() {
+        case .Result(let waarde):
+            displayValue = waarde
+        case .Error(let failureDescription):
+            display.text = failureDescription != nil ? failureDescription! : "extensiveEvaluate failed"
         }
     }
     
@@ -125,17 +118,12 @@ class ViewController: UIViewController {
             //} else {
             //    displayValue = nil
             //}
-            if appWithErrorReporting {
                 switch brain.performOperation(operation)! {
                 case .Result(let waarde):
                     displayValue = waarde
                 case .Error(let failureDescription):
-                    display.text = failureDescription != nil ? failureDescription! : "No error defined"
+                    display.text = failureDescription != nil ? failureDescription! : "performOperation failed"
                 }
-            } else {
-                displayValue = brain.evaluate()
-            }
-
         }
         updateInputLabel()
     }
@@ -143,21 +131,11 @@ class ViewController: UIViewController {
     @IBAction func enter() {
         userIsInTheMiddleOfTypingANumber = false
         aDotHasBeenAddedToNumber = false
-        
-        //if let result = brain.pushOperand(displayValue!) {
-        //    displayValue! = result
-        //} else {
-        //    displayValue = nil
-        //}
-        if appWithErrorReporting {
-            switch brain.pushOperand(displayValue!)! {
-            case .Result(let waarde):
-                displayValue = waarde
-            case .Error(let failureDescription):
-                display.text = failureDescription != nil ? failureDescription! : "No error defined"
-            }
-        } else {
-            displayValue = brain.evaluate()
+        switch brain.pushOperand(displayValue!)! {
+        case .Result(let waarde):
+            displayValue = waarde
+        case .Error(let failureDescription):
+            display.text = failureDescription != nil ? failureDescription! : "pushOperand failed"
         }
         updateInputLabel()
     }
