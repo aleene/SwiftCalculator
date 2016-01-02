@@ -233,6 +233,14 @@
                                     <action selector="clearErrorPressed" destination="BYZ-38-t0r" eventType="touchUpInside" id="Xxn-iI-qd1"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="dsX-wk-b4y">
+                                <rect key="frame" x="359" y="500" width="103" height="92"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="24"/>
+                                <state key="normal" title="CE"/>
+                                <connections>
+                                    <action selector="clearErrorPressed" destination="BYZ-38-t0r" eventType="touchUpInside" id="n7o-g7-SJg"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>

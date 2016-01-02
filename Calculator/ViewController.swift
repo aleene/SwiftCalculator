@@ -14,6 +14,9 @@ class ViewController: UIViewController {
 
     @IBOutlet weak var inputLabel: UILabel!
     
+    // change this to use another part of the app
+    let appWithErrorReporting = true
+    
     var userIsInTheMiddleOfTypingANumber = false
     var userEnteredAFormula = false
     var aDotHasBeenAddedToNumber = false
@@ -25,13 +28,17 @@ class ViewController: UIViewController {
     let zero = "0"
     let equal = "="
     
+    enum ResultOrError {
+        case Result(Double?)
+        case Error(String?)
+    }
+    
     var displayValue: Double? { // Project 2.9.4 optional double
         get {
             // Project 2.Hint.1 use optional chaining
             // http://cs193p.m2m.at/cs193p-project-2-assignment-2-task-4-winter-2015/
             return NSNumberFormatter().numberFromString(display.text!)?.doubleValue
         }
-        
         set {
             display.text = newValue != nil ? "\(newValue!)" : (userEnteredAFormula ? space : zero) // Project 2.9.F blank
         }
@@ -44,6 +51,19 @@ class ViewController: UIViewController {
             inputLabel.text = description
         } else {
             inputLabel.text = space // Project 2.Hint.6
+        }
+    }
+    
+    func extensiveEvaluate() {
+        if appWithErrorReporting {
+            switch brain.evaluateAndReportErrors() {
+            case .Result(let waarde):
+                displayValue = waarde
+            case .Error(let failureDescription):
+                display.text = failureDescription != nil ? failureDescription! : "No error defined"
+            }
+        } else {
+            displayValue = brain.evaluate()
         }
     }
     
@@ -69,14 +89,21 @@ class ViewController: UIViewController {
     
     @IBAction func clearErrorPressed() {
         if userIsInTheMiddleOfTypingANumber {
-            // remove the last character on the display
+            // Project 1.Extra.1
+            // the last entered number should be removed
             display.text!.removeAtIndex(display.text!.endIndex.predecessor())
             // check if any digit is left and whether there rests something to delete
             if display.text!.characters.count == 0 {
                 userIsInTheMiddleOfTypingANumber = false
-                displayValue = nil
+                extensiveEvaluate()
             }
-        } // else nothing happens
+        } else {
+            // Project 2.Extra.2
+            // This should allow to edit the stack in the calculator brain
+            brain.removeLast()
+            updateInputLabel()
+            extensiveEvaluate()
+        }
     }
     
     // Project 2.10 updated
@@ -88,6 +115,7 @@ class ViewController: UIViewController {
         updateInputLabel()
     }
         
+    
     @IBAction func operate(sender: UIButton) {
         if userIsInTheMiddleOfTypingANumber {
             enter()
@@ -97,11 +125,22 @@ class ViewController: UIViewController {
 //                _ = inputLabel.text!.characters.dropLast()
 //            }
 //            inputLabel.text = inputLabel.text! + space + sender.currentTitle! + "="
-            if let result = brain.performOperation(operation) {
-                displayValue! = result
+            //if let result = brain.performOperation(operation) {
+              //  displayValue! = result
+            //} else {
+            //    displayValue = nil
+            //}
+            if appWithErrorReporting {
+                switch brain.performOperation(operation)! {
+                case .Result(let waarde):
+                    displayValue = waarde
+                case .Error(let failureDescription):
+                    display.text = failureDescription != nil ? failureDescription! : "No error defined"
+                }
             } else {
-                displayValue = nil
+                displayValue = brain.evaluate()
             }
+
         }
         updateInputLabel()
     }
@@ -109,10 +148,21 @@ class ViewController: UIViewController {
     @IBAction func enter() {
         userIsInTheMiddleOfTypingANumber = false
         aDotHasBeenAddedToNumber = false
-        if let result = brain.pushOperand(displayValue!) {
-            displayValue! = result
+        
+        //if let result = brain.pushOperand(displayValue!) {
+        //    displayValue! = result
+        //} else {
+        //    displayValue = nil
+        //}
+        if appWithErrorReporting {
+            switch brain.pushOperand(displayValue!)! {
+            case .Result(let waarde):
+                displayValue = waarde
+            case .Error(let failureDescription):
+                display.text = failureDescription != nil ? failureDescription! : "No error defined"
+            }
         } else {
-            displayValue = nil
+            displayValue = brain.evaluate()
         }
         updateInputLabel()
     }
@@ -126,16 +176,15 @@ class ViewController: UIViewController {
         // corresponds to the M button and adds a variable to the brain stack
         brain.pushOperand(variableName) // Project 2.9.c
         updateInputLabel()
-        displayValue = brain.evaluate() // Project 2.9.d
+        extensiveEvaluate()
     }
-    
+
     // Project 2.9, 2.9.e
     @IBAction func setMemoryValue() {
         // corresponds to the >M button and adds the variable value to the brain stack
         brain.variableValues[variableName] = displayValue // Project 2.9.a
         userIsInTheMiddleOfTypingANumber = false // Project 2.9.b
-        displayValue = brain.evaluate() // Project 2.9.d
+        extensiveEvaluate()
     }
-    
 }
 
