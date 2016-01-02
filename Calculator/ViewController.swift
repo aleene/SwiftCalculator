@@ -28,11 +28,6 @@ class ViewController: UIViewController {
     let zero = "0"
     let equal = "="
     
-    enum ResultOrError {
-        case Result(Double?)
-        case Error(String?)
-    }
-    
     var displayValue: Double? { // Project 2.9.4 optional double
         get {
             // Project 2.Hint.1 use optional chaining
