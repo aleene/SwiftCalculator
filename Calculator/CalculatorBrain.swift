@@ -13,6 +13,7 @@ class CalculatorBrain {
     
     // is in Swift 2 gewijzigd van Printable naar CustomStringConvertable
     // Project 2.2 enum unchanged
+    // Project 2.Extra.1 - inspiration by https://github.com/m2mtech/calculator-2015/tree/project2assignment2extratask1/Calculator
     private enum Op :CustomStringConvertible
     {
         case Getal(Double)
@@ -20,14 +21,19 @@ class CalculatorBrain {
         case UnaryOperation(String, (Double -> Double), (Double -> String?)?)
         // The UnaryOperation consists of en enum with three elements:
         // - A string, which identifies the unary operation
+        // - An Int which specifies the operator preference (higher number has more preference)
         // - A function implementing the unary operation, which takes a double and gives a double
         // - An optional error function, which takes a double and gives an optional string
-        case BinaryOperation(String, ((Double, Double) -> Double), ((Double, Double) -> String?)?)
+        case BinaryOperation(String, Int, ((Double, Double) -> Double), ((Double, Double) -> String?)?)
         // The BinaryOperation consists of en enum with three elements:
         // - A string, which identifies the binary operation
+        // - An Int which specifies the operator preference (higher number has more preference)
         // - A function implementing the binary operation, which takes two doubles and gives a double
         // - An optional error function, which takes two doubles and gives an optional string
         case Constant(String, Double)
+        // - A string, which identifies the constant
+        // - An Int which specifies the operator preference (higher number has more preference)
+        // - A double, which is the value of the constant
         case Variable(String)
         
         var description: String {
@@ -37,7 +43,7 @@ class CalculatorBrain {
                     return "\(getal)"
                 case .UnaryOperation(let symbol, _, _):
                     return symbol
-                case .BinaryOperation(let symbol, _, _):
+                case .BinaryOperation(let symbol, _, _, _):
                     return symbol
                 case .Constant(let symbol, _):
                     return "\(symbol)"
@@ -46,6 +52,21 @@ class CalculatorBrain {
                 }
             }
         }
+        
+        // the variable precedence is used to determine the importance of the operation
+        // the higher the value, the more important is the operation
+        var precedence: Int {
+            get {
+                switch self {
+                case .BinaryOperation(_, let precedence, _, _):
+                    return precedence
+                default:
+                    // all the other operations have maximal precedence
+                    return Int.max
+                }
+            }
+        }
+
     }
     
     // Project 2.5
@@ -53,7 +74,7 @@ class CalculatorBrain {
 
     
     // Project 2.7
-    private func evaluateDescription(ops: [Op]) -> (result: String?, remainingOps: [Op]) {
+    private func evaluateDescription(ops: [Op]) -> (result: String?, remainingOps: [Op], previousPrecedence: Int) {
         let leftParenthesis = "("
         let rightParenthesis = ")"
         let questionMark = "?"
@@ -63,68 +84,48 @@ class CalculatorBrain {
             let op = remainingOps.removeLast()
             switch op {
             case .Getal(let getal):// Project 2.7.c
-                return ("\(getal)", remainingOps)
+                return ("\(getal)", remainingOps, op.precedence)
             case .UnaryOperation(let operation, _, _): // Project 2.7.a
                 let operandEvaluation = evaluateDescription(remainingOps)
 // TBD gives double (( and ))
-                if let oplossing = operandEvaluation.result {
-                    return (operation+leftParenthesis+oplossing+rightParenthesis, operandEvaluation.remainingOps)
-                } else {
-                    return (operation+leftParenthesis+questionMark+rightParenthesis, operandEvaluation.remainingOps)
-                }
-            case .BinaryOperation(let operation, _, _):
+                let oplossing = operandEvaluation.result != nil ? operandEvaluation.result : questionMark
+                return (operation+leftParenthesis+oplossing!+rightParenthesis, operandEvaluation.remainingOps, op.precedence)
+            case .BinaryOperation(let operation, _, _, _):
                 let op1Evaluation = evaluateDescription(remainingOps)
-                if let getal1 = op1Evaluation.result {
-                    let op2Evaluation = evaluateDescription(op1Evaluation.remainingOps)
-                    if let getal2 = op2Evaluation.result {
+                var getal1 = op1Evaluation.result != nil ? op1Evaluation.result! : questionMark
+                let op2Evaluation = evaluateDescription(op1Evaluation.remainingOps)
+                var getal2 = op2Evaluation.result != nil ? op2Evaluation.result! : questionMark
 // TBD sometimes ( and ) are not necessary, i.e. 3+4+5
-                        // get the order of the variable right Project 2.7.b
-                        return(leftParenthesis+getal2+operation+getal1+rightParenthesis, op2Evaluation.remainingOps)
-                    }
-                    else {
-                        return(leftParenthesis+questionMark+operation+getal1+rightParenthesis, op2Evaluation.remainingOps)
-                    }
-                } else {
-                    let op2Evaluation = evaluateDescription(op1Evaluation.remainingOps)
-                    if let getal2 = op2Evaluation.result {
-// TBD sometimes ( and ) are not necessary, i.e. 3+4+5
-                        // get the order of the variable right Project 2.7.b
-                        return(leftParenthesis+getal2+operation+questionMark+rightParenthesis, op2Evaluation.remainingOps)
-                    } else {
-                        return(leftParenthesis+questionMark+operation+questionMark+rightParenthesis, op2Evaluation.remainingOps)
-                    }
-                }
+                // check the precedence rules to determine whete
+                getal1 = op1Evaluation.previousPrecedence < op.precedence ? leftParenthesis+getal1+rightParenthesis : getal1
+                getal2 = op2Evaluation.previousPrecedence < op.precedence ? leftParenthesis+getal2+rightParenthesis : getal2
+                // get the order of the variables right Project 2.7.b
+                // we put getal2 before getal1
+                return(getal2+operation+getal1, op2Evaluation.remainingOps, op.precedence)
             case .Constant(let constant, _):// Project 2.7.c
-                return (constant, remainingOps)
+                return (constant, remainingOps, op.precedence)
                 // is the next on the stack a variable?
             case .Variable(let variableName):// Project 2.7.c
                 // return the corresponding variable name
                 // what happens if variableName is unknown?
-                return (variableName, remainingOps)
+                return (variableName, remainingOps, op.precedence)
             }
         }
-        return(nil, ops)
+        return(nil, ops, Int.max)
     }
 
     var description: String? {
-        // Note that is has been defined as an optional string
-        set {
-            // is this OK to suppress the setter?
-        }
+        // Note that description has been defined as an optional string
         get {
             let comma = ","
             // opStack will not be consumed and will still be available
-            var (opStackDescription, remainder) = evaluateDescription(OpStack)
-            // print("\(OpStack) - \(opStackDescription) with \(remainder) left over")
+            var (opStackDescription, remainder, _) = evaluateDescription(OpStack)
+// print("\(OpStack) - \(opStackDescription) with \(remainder) left over")
             // the entire opStack should be consumed
             while remainder.count != 0 { // Project 2.7.f
                 let evaluation = evaluateDescription(remainder)
-                if let resultaat = evaluation.result {
-                    opStackDescription = resultaat+comma+opStackDescription! // Project 2.Hint.8, separate trees with comma's
-                    remainder = evaluation.remainingOps
-                } else {
-                    
-                }
+                opStackDescription = evaluation.result != nil ? evaluation.result!+comma+opStackDescription! : opStackDescription // Project 2.Hint.8, separate trees with comma's
+                remainder = evaluation.remainingOps
             }
             return opStackDescription
         }
@@ -140,10 +141,10 @@ class CalculatorBrain {
         func learnOp(op: Op) {
             knownOps[op.description] = op
         }
-        learnOp(Op.BinaryOperation("+",+, nil))
-        learnOp(Op.BinaryOperation("−", {$1-$0}, nil))
-        learnOp(Op.BinaryOperation("×",*,nil))
-        learnOp(Op.BinaryOperation("÷", {$1/$0}, {(s1,s2) in s1==0 ? "Divide by zero" : nil}))
+        learnOp(Op.BinaryOperation("+", 1, +, nil))
+        learnOp(Op.BinaryOperation("−", 1, {$1-$0}, nil))
+        learnOp(Op.BinaryOperation("×", 2, *,nil))
+        learnOp(Op.BinaryOperation("÷", 2, {$1/$0}, {(s1,s2) in s1==0 ? "Divide by zero" : nil}))
         learnOp(Op.UnaryOperation("√",sqrt, {(s1) in s1<=0 ? "Sqrt of negative number" : nil}))
         learnOp(Op.UnaryOperation("sin",sin, nil))
         learnOp(Op.UnaryOperation("cos",cos, nil))
@@ -187,7 +188,7 @@ class CalculatorBrain {
                     // merk op het gebruik van operation hier
                     return (operation(getal), operandEvaluation.remainingOps)
                 }
-            case .BinaryOperation(_, let operation, _):
+            case .BinaryOperation(_, _, let operation, _):
                 let op1Evaluation = evaluate(remainingOps)
                 if let getal1 = op1Evaluation.result {
                     let op2Evaluation = evaluate(op1Evaluation.remainingOps)
@@ -260,7 +261,7 @@ class CalculatorBrain {
                     return (ResultOrError.Error(failureDescription), operandEvaluation.remainingOps)
                 }
                 
-            case .BinaryOperation(_, let operation, let errorTest):
+            case .BinaryOperation(_, _, let operation, let errorTest):
                 let op1Evaluation = evaluateWithErrors(remainingOps)
                 switch op1Evaluation.result {
                 case .Result(let getal1):

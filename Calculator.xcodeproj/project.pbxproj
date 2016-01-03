@@ -14,7 +14,6 @@
 		511686091C2403AC00E067B8 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 511686071C2403AC00E067B8 /* LaunchScreen.storyboard */; };
 		511686141C2403AC00E067B8 /* CalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 511686131C2403AC00E067B8 /* CalculatorTests.swift */; };
 		5116861F1C2403AC00E067B8 /* CalculatorUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5116861E1C2403AC00E067B8 /* CalculatorUITests.swift */; };
-		516538031C381D9D00A5C23D /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = 516538021C381D9D00A5C23D /* README.md */; };
 		517BC7871C284CD9003E77D8 /* CalculatorBrain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 517BC7861C284CD9003E77D8 /* CalculatorBrain.swift */; };
 /* End PBXBuildFile section */
 
@@ -264,7 +263,6 @@
 			files = (
 				517BC7871C284CD9003E77D8 /* CalculatorBrain.swift in Sources */,
 				511686011C2403AB00E067B8 /* ViewController.swift in Sources */,
-				516538031C381D9D00A5C23D /* README.md in Sources */,
 				511685FF1C2403AB00E067B8 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
