@@ -96,7 +96,8 @@ class CalculatorBrain {
                 let op2Evaluation = evaluateDescription(op1Evaluation.remainingOps)
                 var getal2 = op2Evaluation.result != nil ? op2Evaluation.result! : questionMark
 // TBD sometimes ( and ) are not necessary, i.e. 3+4+5
-                // check the precedence rules to determine whete
+                // check the precedence rules to determine whether parentheses are needed
+                // if the previous operation had lower precedence, then parentheses are required
                 getal1 = op1Evaluation.previousPrecedence < op.precedence ? leftParenthesis+getal1+rightParenthesis : getal1
                 getal2 = op2Evaluation.previousPrecedence < op.precedence ? leftParenthesis+getal2+rightParenthesis : getal2
                 // get the order of the variables right Project 2.7.b
